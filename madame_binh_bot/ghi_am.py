@@ -142,3 +142,80 @@ def bao_cao(thu_muc: Path) -> str:
     if khong_chi_dinh:
         dong += ["", "File audio có trong thư mục nhưng KHÔNG được chỉ định (không dùng): " + ", ".join(khong_chi_dinh)]
     return "\n".join(dong)
+
+
+# ---------- dùng cho giao diện web ----------
+def tom_tat(thu_muc: Path) -> dict:
+    """Dữ liệu có cấu trúc cho giao diện web."""
+    try:
+        ban_ghi, khong_chi_dinh = quet(thu_muc)
+    except (ValueError, json.JSONDecodeError) as e:
+        return {"loi": f"Lỗi đọc {FILE_CAU_HINH}: {e}", "canh": [], "khong_chi_dinh": []}
+    canh = []
+    for c in KICH_BAN:
+        cua_canh = [b for b in ban_ghi if b.canh == c.so]
+        tong = sum(b.thoi_luong for b in cua_canh if b.thoi_luong is not None)
+        canh.append({
+            "so": c.so, "ten": c.ten, "bat_dau": mmss(c.bat_dau), "ket_thuc": mmss(c.ket_thuc),
+            "khung": c.thoi_luong, "tong": round(tong, 1),
+            "lech": round(tong - c.thoi_luong, 1) if cua_canh else None,
+            "ban_ghi": [{"file": b.file, "mo_ta": b.mo_ta, "ton_tai": b.ton_tai, "loi": b.loi,
+                         "thoi_luong": round(b.thoi_luong, 1) if b.thoi_luong is not None else None}
+                        for b in cua_canh],
+        })
+    return {"loi": "", "canh": canh, "khong_chi_dinh": khong_chi_dinh, "dung_sai": DUNG_SAI}
+
+
+def ten_an_toan(ten: str) -> str:
+    """Chỉ giữ tên file (bỏ đường dẫn), chặn tên rỗng / ẩn / sai đuôi."""
+    ten = Path(ten.replace("\\", "/")).name.strip()
+    if not ten or ten.startswith(".") or ten == FILE_CAU_HINH:
+        raise ValueError("Tên file không hợp lệ")
+    if Path(ten).suffix.lower() not in DUOI_AUDIO:
+        raise ValueError(f"{ten}: chỉ nhận file âm thanh ({', '.join(sorted(DUOI_AUDIO))})")
+    return ten
+
+
+def _ghi_cau_hinh(thu_muc: Path, ds: list[dict]) -> None:
+    p = thu_muc / FILE_CAU_HINH
+    goc = {}
+    if p.exists():
+        cu = json.loads(p.read_text(encoding="utf-8"))
+        if isinstance(cu, dict):
+            goc = cu
+    goc["ban_ghi"] = ds
+    thu_muc.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(goc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def chi_dinh(thu_muc: Path, ten: str, canh: int, mo_ta: str = "") -> None:
+    """Gán một file (đã có trong thư mục) cho một cảnh; nếu đã gán thì cập nhật."""
+    ten = ten_an_toan(ten)
+    if canh not in CANH_THEO_SO:
+        raise ValueError("Cảnh phải từ 1 đến 7")
+    if not (thu_muc / ten).is_file():
+        raise ValueError(f"Không thấy file {ten} trong thư mục ghi âm")
+    ds = doc_cau_hinh(thu_muc)
+    for muc in ds:
+        if muc["file"] == ten:
+            muc["canh"], muc["mo_ta"] = canh, mo_ta or muc.get("mo_ta", "")
+            break
+    else:
+        ds.append({"file": ten, "canh": canh, "mo_ta": mo_ta})
+    _ghi_cau_hinh(thu_muc, ds)
+
+
+def bo_chi_dinh(thu_muc: Path, ten: str) -> None:
+    """Bỏ file khỏi danh sách (không xóa file khỏi máy)."""
+    ds = [m for m in doc_cau_hinh(thu_muc) if m["file"] != ten]
+    _ghi_cau_hinh(thu_muc, ds)
+
+
+def luu_file_tai_len(thu_muc: Path, ten: str, du_lieu: bytes, ghi_de: bool = False) -> str:
+    ten = ten_an_toan(ten)
+    thu_muc.mkdir(parents=True, exist_ok=True)
+    p = thu_muc / ten
+    if p.exists() and not ghi_de:
+        raise FileExistsError(f"Đã có file {ten} – đổi tên hoặc chọn ghi đè")
+    p.write_bytes(du_lieu)
+    return ten
