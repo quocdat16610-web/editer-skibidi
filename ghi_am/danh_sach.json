@@ -1,0 +1,12 @@
+{
+  "_huong_dan": "Chép file ghi âm vào thư mục ghi_am/ rồi khai báo ở đây. Bot CHỈ dùng các file có trong danh sách này, đúng cảnh được gán. Một cảnh có thể có nhiều file (xếp theo thứ tự).",
+  "ban_ghi": [
+    {"file": "canh1_mo_dau.mp3", "canh": 1, "mo_ta": "Voice-over mở đầu"},
+    {"file": "canh2_tuoi_tre.mp3", "canh": 2, "mo_ta": "Voice-over tuổi trẻ, gia đình"},
+    {"file": "canh3_ban_linh.mp3", "canh": 3, "mo_ta": "Voice-over năm 1951"},
+    {"file": "canh4_hoi_nghi_paris.mp3", "canh": 4, "mo_ta": "Voice-over Hội nghị Paris"},
+    {"file": "canh5_ky_hiep_dinh.mp3", "canh": 5, "mo_ta": "Voice-over 27/01/1973"},
+    {"file": "canh6_sau_chien_tranh.mp3", "canh": 6, "mo_ta": "Voice-over sau chiến tranh"},
+    {"file": "canh7_hoc_sinh_noi.mp3", "canh": 7, "mo_ta": "Học sinh nói trước máy quay"}
+  ]
+}

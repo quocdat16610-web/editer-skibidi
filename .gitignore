@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+ket_qua/
+# File ghi âm là dữ liệu cá nhân – không đẩy lên git (chỉ giữ file cấu hình)
+ghi_am/*
+!ghi_am/danh_sach.json
+!ghi_am/README.md
